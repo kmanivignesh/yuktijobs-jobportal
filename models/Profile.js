@@ -9,6 +9,6 @@ const profileSchema = new mongoose.Schema({
   experience: String,
   education: String,
   resumeLink: String
-});
+}, { timestamps: true });
 
-export default mongoose.model('Profile', profileSchema);
+module.exports = mongoose.model('Profile', profileSchema);

@@ -93,7 +93,7 @@ exports.getJobAnalytics = async (req, res) => {
   }
 };
 
-// 🟣 Get all jobs (for Jobseekers)
+// 🟣 Get all jobs (for Jobseekers) - MAKE SURE THIS EXISTS
 exports.getAllJobs = async (req, res) => {
   try {
     const jobs = await Job.find().sort({ postedAt: -1 }).populate('postedBy', 'name email role');

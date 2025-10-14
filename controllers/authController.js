@@ -85,22 +85,58 @@ exports.verifyOtp = async (req, res) => {
 };
 
 // 🔹 LOGIN
+// Fix the login function in authController.js
+// In AuthContext.js - update the login function
+// In backend: controllers/authController.js - login function
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'User not found' });
+    // Find user and exclude password from the returned object
+    const user = await User.findOne({ email }).select('-password');
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
 
-    if (!user.isVerified) return res.status(400).json({ message: 'Please verify your email first' });
-    if (user.password !== password) return res.status(400).json({ message: 'Incorrect password' });
+    if (!user.isVerified) {
+      return res.status(400).json({ message: 'Please verify your email first' });
+    }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '1d',
+    // Since we excluded password, we need to find again for comparison
+    const userWithPassword = await User.findOne({ email });
+    const isPasswordValid = await bcrypt.compare(password, userWithPassword.password);
+    
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        id: user._id, 
+        role: user.role,
+        name: user.name,
+        email: user.email 
+      }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '1d' }
+    );
+
+    // ✅ RETURN BOTH TOKEN AND USER DATA
+    res.status(200).json({
+      message: 'Login successful',
+      token: token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified
+      }
     });
 
-    res.status(200).json({ message: 'Login successful', token });
   } catch (error) {
-    res.status(500).json({ message: 'Error logging in' });
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Error logging in', error: error.message });
   }
 };

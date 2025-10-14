@@ -61,6 +61,7 @@ router.post('/verify-otp', async (req, res) => {
 });
 
 // =============== LOGIN ==================
+// =============== LOGIN ==================
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -70,7 +71,7 @@ router.post('/login', async (req, res) => {
     if (!user.isVerified) return res.status(403).json({ message: 'Please verify your account first' });
 
     // Plain text password check
-    if (user.password != password) {
+    if (user.password !== password) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -80,12 +81,20 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1d' }
     );
 
+    // ✅ Return both token and user details
     res.json({
       message: 'Login successful',
       token,
-      role: user.role,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+      },
     });
   } catch (err) {
+    console.error('Login error:', err);
     res.status(500).json({ message: 'Login failed', error: err.message });
   }
 });
